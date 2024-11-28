@@ -1,0 +1,87 @@
+#include <GL/glut.h>
+#include <cmath>
+#include <sstream>
+#include <iostream>
+const int windowWidth = 500;
+const int windowHeight = 500;
+struct Point {
+int x, y;
+};
+Point startPoint, endPoint;
+bool isStartPointSet = false;
+void drawPixel(int x, int y) {
+glPointSize(5.0f);
+glBegin(GL_POINTS);
+glVertex2i(x, y);
+glEnd();
+}
+void renderText(int x, int y, const std::string& text) {
+glRasterPos2i(x, y);
+for (char c : text) {
+glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, c);
+}
+}
+float calculateSlope(const Point& p1, const Point& p2, bool& isVertical) {
+if (p1.x == p2.x) {
+isVertical = true;
+return 0.0f;
+}
+isVertical = false;
+return static_cast<float>(p2.y - p1.y) / static_cast<float>(p2.x - p1.x);
+}
+void bresenhamLine(const Point& start, const Point& end) {
+int dx = abs(end.x - start.x);
+int dy = abs(end.y - start.y);
+int sx = (start.x < end.x) ? 1 : -1;
+int sy = (start.y < end.y) ? 1 : -1;
+int err = dx - dy;
+int x = start.x, y = start.y;
+while (true) {
+drawPixel(x, y);
+if (x == end.x && y == end.y) break;
+int e2 = 2 * err;
+if (e2 > -dy) { err -= dy; x += sx; }
+if (e2 < dx) { err += dx; y += sy; }
+}}
+void display() {
+glClear(GL_COLOR_BUFFER_BIT);
+if (isStartPointSet) {
+glColor3f(1.0f, 1.0f, 0.0f);
+bresenhamLine(startPoint, endPoint);
+bool isVertical;
+float slope = calculateSlope(startPoint, endPoint, isVertical);
+glColor3f(0.0f, 1.0f, 0.0f);
+renderText(startPoint.x + 5, startPoint.y + 5, "(" + std::to_string(startPoint.x) + ", " + std::to_string(startPoint.y) + ")");
+renderText(endPoint.x + 5, endPoint.y + 5, "(" + std::to_string(endPoint.x) + ", " + std::to_string(endPoint.y) + ")");
+std::string slopeText = "Slope: " + (isVertical ? "Undefined" : std::to_string(slope));
+renderText((startPoint.x + endPoint.x) / 2 + 5, (startPoint.y + endPoint.y) / 2 + 5, slopeText);
+}
+glColor3f(1.0f, 1.0f, 1.0f);
+renderText(10, windowHeight - 30, "Name: Suhani chandel");
+renderText(10, windowHeight - 50, "SAP ID: 500108261");
+glFlush();
+}
+void mouseClick(int button, int state, int x, int y) {
+if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+int worldX = x;
+int worldY = windowHeight - y;
+if (!isStartPointSet) {
+startPoint = {worldX, worldY};
+isStartPointSet = true;
+} else {
+endPoint = {worldX, worldY};
+isStartPointSet = false;
+glutPostRedisplay();
+}}}
+int main(int argc, char** argv) {
+glutInit(&argc, argv);
+glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
+glutInitWindowSize(windowWidth, windowHeight);
+glutCreateWindow("Line Drawing and Slope Calculation");
+glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+glOrtho(0, windowWidth, 0, windowHeight, -1.0, 1.0);
+glutDisplayFunc(display);
+glutMouseFunc(mouseClick);
+glutMainLoop();
+return 0;
+}
