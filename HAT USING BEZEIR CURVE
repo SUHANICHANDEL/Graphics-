@@ -1,0 +1,131 @@
+#include <GL/glut.h>
+#include <queue>
+#include <cmath>
+#include <cstring>
+int windowWidth = 800;
+int windowHeight = 600;
+float fillColor[3] = {1.0, 0.0, 0.0};
+float boundaryColor[3] = {0.0, 0.0, 0.0};
+bool isColored = false;
+const int maxPixels = 100000;
+float filledPixels[maxPixels][2];
+int filledPixelCount = 0;
+GLfloat controlPoints[] = {
+-0.3f, 0.2f, -0.3f, 0.5f, 0.3f, 0.5f, 0.3f, 0.2f,
+0.3f, 0.2f, 0.35f, 0.1f, 0.4f, 0.0f, 0.45f, -0.1f,
+0.8f, -0.2f, 0.6f, -0.3f, -0.6f, -0.3f, -0.8f, -0.2f,
+-0.45f, -0.1f, -0.4f, 0.0f, -0.35f, 0.1f, -0.3f, 0.2f
+};
+void cubicBezierPoint(float t, float& x, float& y,
+float a, float b, float c, float d,
+float e, float f, float g, float h) {
+float u = 1 - t;
+float tt = t * t;
+float uu = u * u;
+float uuu = uu * u;
+float ttt = tt * t;
+x = uuu * a + 3 * uu * t * c + 3 * u * tt * e + ttt * g;
+y = uuu * b + 3 * uu * t * d + 3 * u * tt * f + ttt * h;
+}
+void boundaryFill(int startX, int startY, float fillColor[3], float boundaryColor[3]) {
+std::queue<std::pair<int, int>> pixels;
+pixels.push({startX, startY});
+while (!pixels.empty()) {
+auto current = pixels.front();
+pixels.pop();
+int x = current.first, y = current.second;
+if (x < 0 || x >= windowWidth || y < 0 || y >= windowHeight) continue;
+float currentColor[3];
+glReadPixels(x, windowHeight - y, 1, 1, GL_RGB, GL_FLOAT, currentColor);
+if ((currentColor[0] != boundaryColor[0] || currentColor[1] != boundaryColor[1] || currentColor[2] != boundaryColor[2]) &&
+(currentColor[0] != fillColor[0] || currentColor[1] != fillColor[1] || currentColor[2] != fillColor[2])) {
+glColor3fv(fillColor);
+glBegin(GL_POINTS);
+glVertex2f((2.0f * x) / windowWidth - 1.0f, 1.0f - (2.0f * y) / windowHeight);
+glEnd();
+glFlush();
+if (filledPixelCount < maxPixels) {
+filledPixels[filledPixelCount][0] = (2.0f * x) / windowWidth - 1.0f;
+filledPixels[filledPixelCount][1] = 1.0f - (2.0f * y) / windowHeight;
+filledPixelCount++;
+}
+pixels.push({x + 1, y});
+pixels.push({x - 1, y});
+pixels.push({x, y + 1});
+pixels.push({x, y - 1});
+}
+}
+}
+// Redraw filled pixels function
+void redrawFilledPixels() {
+glColor3fv(fillColor);
+glBegin(GL_POINTS);
+for (int i = 0; i < filledPixelCount; i++) {
+glVertex2f(filledPixels[i][0], filledPixels[i][1]);
+}
+glEnd();
+}
+void drawText(const char* text, float x, float y) {
+glRasterPos2f(x, y);
+for (const char* c = text; *c != '\0'; c++) {
+glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
+}
+}
+void drawHat() {
+glClear(GL_COLOR_BUFFER_BIT);
+glColor3fv(boundaryColor);
+glEnable(GL_LINE_SMOOTH);
+glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+glLineWidth(2.0);
+glBegin(GL_LINE_STRIP);
+for (int curve = 0; curve < 4; curve++) {
+for (float t = 0; t <= 1.001f; t += 0.005f) {
+float x, y;
+int idx = curve * 4 * 2;
+cubicBezierPoint(t, x, y,
+controlPoints[idx], controlPoints[idx + 1],
+controlPoints[idx + 2], controlPoints[idx + 3],
+controlPoints[idx + 4], controlPoints[idx + 5],
+controlPoints[idx + 6], controlPoints[idx + 7]);
+glVertex2f(x, y);
+}
+}
+glEnd();
+redrawFilledPixels();
+glColor3f(1.0, 0.0, 1.0);
+drawText("SUHANI CHANDEL - 500108261", -0.9f, -0.9f);
+glFlush();
+}
+void mouse(int button, int state, int x, int y) {
+if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN && !isColored) {
+boundaryFill(x, y, fillColor, boundaryColor);
+isColored = true;
+}
+}
+void init() {
+glClearColor(0.0, 1.0, 1.0, 1.0);
+glMatrixMode(GL_PROJECTION);
+glLoadIdentity();
+glMatrixMode(GL_MODELVIEW);
+glLoadIdentity();
+glEnable(GL_BLEND);
+glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+}
+void reshape(int w, int h) {
+glViewport(0, 0, w, h);
+windowWidth = w;
+windowHeight = h;
+}
+int main(int argc, char** argv) {
+glutInit(&argc, argv);
+glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
+glutInitWindowSize(windowWidth, windowHeight);
+glutInitWindowPosition(100, 100);
+glutCreateWindow("Farmer Hat using cubic bezeir curve");
+init();
+glutDisplayFunc(drawHat);
+glutMouseFunc(mouse);
+glutReshapeFunc(reshape);
+glutMainLoop();
+return 0;
+}
