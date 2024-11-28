@@ -1,0 +1,64 @@
+#include <GL/glut.h>
+#include <iostream>
+#include <cstring>
+float xmin = -50, ymin = -50, xmax = 50, ymax = 50;
+float x_pos = 0, y_pos = 0;
+bool pointInside = false;
+void init() {
+glClearColor(1.0, 1.0, 1.0, 1.0);
+glMatrixMode(GL_PROJECTION);
+glLoadIdentity();
+glOrtho(-100, 100, -100, 100, -1.0, 1.0);
+}
+void displayText(float x, float y, const char *text) {
+glRasterPos2f(x, y);
+for (int i = 0; i < strlen(text); i++) {
+glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, text[i]);
+}
+}
+void drawPoint(float x, float y, bool inside) {
+char coordText[20];
+sprintf(coordText, "(%.1f, %.1f)", x, y);
+if (inside) {
+glColor3f(1.0, 0.0, 0.0);
+} else {
+glColor3f(0.0, 0.0, 1.0);
+}
+glPointSize(8.0);
+glBegin(GL_POINTS);
+glVertex2f(x, y);
+glEnd();
+glColor3f(0.0, 0.0, 0.0);
+displayText(x + 2, y + 2, coordText);
+}
+void display() {
+glClear(GL_COLOR_BUFFER_BIT);
+glColor3f(0.0, 0.0, 0.0);
+glBegin(GL_LINE_LOOP);
+glVertex2f(xmin, ymin);
+glVertex2f(xmax, ymin);
+glVertex2f(xmax, ymax);
+glVertex2f(xmin, ymax);
+glEnd();
+drawPoint(x_pos, y_pos, pointInside);
+glColor3f(0.0, 0.0, 0.0);
+displayText(-75, -75, "Name: SUHANI CHANDEL, SAP ID: 500108261");
+glFlush();
+}
+void getPointInput() {
+std::cout << "Enter the point coordinates (x, y): ";
+std::cin >> x_pos >> y_pos;
+pointInside = (x_pos >= xmin && x_pos <= xmax && y_pos >= ymin && y_pos <= ymax);
+glutPostRedisplay();
+}
+int main(int argc, char** argv) {
+glutInit(&argc, argv);
+glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
+glutInitWindowSize(500, 500);
+glutCreateWindow("Point Clipping");
+init();
+getPointInput();
+glutDisplayFunc(display);
+glutMainLoop();
+return 0;
+}
