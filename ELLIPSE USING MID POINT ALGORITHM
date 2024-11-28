@@ -1,0 +1,90 @@
+#include <GL/glut.h>
+#include <cmath>
+#include <iostream>
+int xc = 0, yc = 0, rx = 100, ry = 50;
+float lineThickness = 2.0;
+void plot(int x, int y) {
+glBegin(GL_POINTS);
+glColor3f(0.5 + (float)x / rx, 0.0, 1.0 - (float)y / ry);
+glVertex2i(xc + x, yc + y);
+glVertex2i(xc - x, yc + y);
+glVertex2i(xc + x, yc - y);
+glVertex2i(xc - x, yc - y);
+glEnd();
+}
+// Midpoint ellipse algorithm
+void drawEllipseMidpoint() {
+int rxSq = rx * rx;
+int rySq = ry * ry;
+int x = 0, y = ry;
+int px = 0, py = 2 * rxSq * y;
+int p1 = rySq - (rxSq * ry) + (0.25 * rxSq);
+// Region 1: Calculate points until the slope becomes less than 1
+while (px < py) {
+plot(x, y);
+x++;
+px += 2 * rySq;
+if (p1 < 0) {
+p1 += rySq + px;
+} else {
+y--;
+py -= 2 * rxSq;
+p1 += rySq + px - py;
+}
+}
+// Region 2: Calculate points where slope is less than 1
+int p2 = rySq * (x + 0.5) * (x + 0.5) + rxSq * (y - 1) * (y - 1) - rxSq * rySq;
+while (y > 0) {
+plot(x, y);
+y--;
+py -= 2 * rxSq;
+if (p2 > 0) {
+p2 += rxSq - py;
+} else {
+x++;
+px += 2 * rySq;
+p2 += rxSq - py + px;
+}
+}
+}
+void displayText(float x, float y, const char* text) {
+glRasterPos2f(x, y);
+for (const char* c = text; *c != '\0'; c++) {
+glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
+}
+}
+void display() {
+glClear(GL_COLOR_BUFFER_BIT);
+glPointSize(lineThickness);
+drawEllipseMidpoint();
+glColor3f(0.0, 0.0, 0.0);
+displayText(-180, 180, "Name: SUHANI");
+displayText(-180, 160, "Roll No: 500108261");
+glFlush();
+}
+void init() {
+glClearColor(1.0, 0.0, 1.0, 1.0);
+glMatrixMode(GL_PROJECTION);
+glLoadIdentity();
+glOrtho(-200, 200, -200, 200, -1, 1);
+glMatrixMode(GL_MODELVIEW);
+glLoadIdentity();
+}
+int main(int argc, char** argv) {
+// Prompt user for custom radius values
+std::cout << "Enter the x-radius (rx) of the ellipse: ";
+std::cin >> rx;
+std::cout << "Enter the y-radius (ry) of the ellipse: ";
+std::cin >> ry;
+// Prompt user for ellipse line thickness
+std::cout << "Enter the thickness of the ellipse : ";
+std::cin >> lineThickness;
+glutInit(&argc, argv);
+glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
+glutInitWindowSize(400, 400);
+glutCreateWindow("Midpoint Ellipse Drawing ");
+init();
+glutDisplayFunc(display);
+glutMainLoop();
+return 0;
+}
