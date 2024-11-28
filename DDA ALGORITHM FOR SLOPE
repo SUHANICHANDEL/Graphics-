@@ -1,0 +1,105 @@
+#include <GL/glut.h>
+#include <iostream>
+#include <cmath>
+#include <string>
+#include <vector>
+int x1, yc, x2, y2;
+bool firstClick = true;
+float slope = 0.0f;
+std::vector<std::pair<int, int>> lines;
+float calculateSlope(int x1, int y1, int x2, int y2) {
+if (x2 != x1) {
+return (float)(y2 - y1) / (x2 - x1);
+} else {
+return 0.0f;
+}
+}
+void drawPixel(int x, int y) {
+glBegin(GL_POINTS);
+glVertex2f(x, y);
+glEnd();
+}
+void drawLineDDA(int x1, int y1, int x2, int y2) {
+int i ;
+float dx,dy ,x ,y , length;
+if(abs(x2 -x1)>abs(y2-y1))
+length = abs(x2-x1);
+else
+length = abs(y2-y1);
+dx = (x2-x1) / length;
+dy = (y2-y1) /length;
+x = x1;
+y = y1;
+for ( i = 0; i <= length; i++) {
+drawPixel(round(x), round(y));
+x = x + dx;
+y =y+dy;
+}
+glFlush();
+}
+void drawBitmapText(std::string text, int x, int y) {
+glRasterPos2i(x, y);
+for (char &c : text) {
+glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, c);
+}
+}
+void displaySlope() {
+std::string slopeText = "SLOPE: " + std::to_string(slope);
+drawBitmapText(slopeText, 250, 460);
+}
+void mouseClick(int button, int state, int x, int y) {
+if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+if (firstClick) {
+x1 = x;
+yc = 480 - y;
+firstClick = false;
+} else {
+x2 = x;
+y2 = 480 - y;
+lines.push_back({x1, yc});
+lines.push_back({x2, y2});
+slope = calculateSlope(x1, yc, x2, y2);
+glutPostRedisplay();
+firstClick = true;
+}
+}
+}
+void redrawLines() {
+for (size_t i = 0; i < lines.size(); i += 2) {
+drawLineDDA(lines[i].first, lines[i].second, lines[i + 1].first, lines[i + 1].second);
+}
+}
+void display() {
+glClear(GL_COLOR_BUFFER_BIT);
+redrawLines();
+displaySlope();
+drawBitmapText("Name: SUHANI", 10, 30);
+drawBitmapText("SAP ID: 500108261", 10, 10);
+glFlush();
+}
+void init() {
+glClearColor(0.0, 1.0, 0.0, 0.0);
+glColor3f(0.0, 0.0, 0.5);
+glPointSize(1.0);
+glEnable(GL_BLEND);
+glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+glEnable(GL_LINE_SMOOTH);
+glHint(GL_LINE_SMOOTH_HINT,GL_NICEST);
+glMatrixMode(GL_PROJECTION);
+glLoadIdentity();
+glOrtho(0, 640, 0, 480, -1.0, 1.0);
+glMatrixMode(GL_MODELVIEW);
+glLoadIdentity();
+}
+int main(int argc, char** argv) {
+glutInit(&argc, argv);
+glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
+glutInitWindowSize(640, 480);
+glutInitWindowPosition(100, 100);
+glutCreateWindow("DDA Line Drawing ");
+init();
+glutDisplayFunc(display);
+glutMouseFunc(mouseClick);
+glutMainLoop();
+return 0;
+}
