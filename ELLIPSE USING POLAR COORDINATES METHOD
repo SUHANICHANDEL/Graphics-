@@ -1,0 +1,53 @@
+#include <GL/glut.h>
+#include <cmath>
+#include <iostream>
+int x1 = 0, y2 = 0, rx = 100, ry = 50;
+void drawEllipsePolar() {
+float theta, x, y;
+glBegin(GL_POINTS);
+for (theta = 0; theta <= 360; theta += 0.01) {
+x = rx * cos(theta);
+y = ry * sin(theta);
+glVertex2f(x1 + x, y2 + y);
+}
+glEnd();
+}
+void displayText(float x, float y, const char* text) {
+glRasterPos2f(x, y);
+for (const char* c = text; *c != '\0'; c++) {
+glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
+}
+}
+void display() {
+glClear(GL_COLOR_BUFFER_BIT);
+glColor3f(0.0, 0.0, 1.0);
+glPointSize(2.0);
+drawEllipsePolar();
+glColor3f(0.0, 0.0, 0.0);
+displayText(-180, 180, "Name: SUHANI CHANDEL");
+displayText(-180, 160, "SAP ID: 500108261");
+glFlush();
+}
+void init() {
+glClearColor(1.0, 0.0, 0.0, 0.0);
+glMatrixMode(GL_PROJECTION);
+glLoadIdentity();
+glOrtho(-200, 200, -200, 200, -1, 1);
+glMatrixMode(GL_MODELVIEW);
+glLoadIdentity();
+}
+int main(int argc, char** argv) {
+// Prompt for rx and ry values
+std::cout << "Enter rx (horizontal radius): ";
+std::cin >> rx;
+std::cout << "Enter ry (vertical radius): ";
+std::cin >> ry;
+glutInit(&argc, argv);
+glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
+glutInitWindowSize(400, 400);
+glutCreateWindow("Polar Ellipse Drawing");
+init();
+glutDisplayFunc(display);
+glutMainLoop();
+return 0;
+}
