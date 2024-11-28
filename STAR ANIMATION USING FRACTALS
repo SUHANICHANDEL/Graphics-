@@ -1,0 +1,120 @@
+#include <GL/glut.h>
+#include <cmath>
+const int MAX_DEPTH = 5;
+int currentDepth = 0;
+float transx1 = 0.0f, transy1 = 0.0f;
+float translateX2 = 0.0f, translateY2 = 0.0f;
+float translateX3 = 0.0f, translateY3 = 0.0f;
+float rotationAngle1 = 0.0f, rotationAngle2 = 0.0f, rotationAngle3 = 0.0f;
+float scaleFactor1 = 1.0f, scaleFactor2 = 1.0f, scaleFactor3 = 1.0f;
+bool reflectX1 = false, reflectX2 = false, reflectX3 = false;
+const float rad = 0.8f;
+void drawStar(float x, float y, float size) {
+glBegin(GL_TRIANGLES);
+for (int i = 0; i < 5; ++i) {
+float angle1 = 2.0f * M_PI * i / 5.0f;
+float angle2 = 2.0f * M_PI * (i + 2) / 5.0f;
+glVertex2f(x, y);
+glVertex2f(x + size * cos(angle1), y + size * sin(angle1));
+glVertex2f(x + size * cos(angle2), y + size * sin(angle2));
+}
+glEnd();
+}
+void drawStarFractal(float x, float y, float size, int depth) {
+if (depth > currentDepth) {
+return;
+}
+glPushMatrix();
+glTranslatef(x, y, 0.0f);
+glRotatef(rotationAngle1, 0.0f, 0.0f, 1.0f);
+glScalef(scaleFactor1, scaleFactor1, 1.0f);
+if (reflectX1) {
+glScalef(-1.0f, 1.0f, 1.0f);
+}
+drawStar(0.0f, 0.0f, size);
+glPopMatrix();
+for (int i = 0; i < 5; ++i) {
+float angle = 2.0f * M_PI * i / 5.0f;
+float newX = x + size * cos(angle);
+float newY = y + size * sin(angle);
+drawStarFractal(newX, newY, size / 3.0f, depth + 1);
+}
+}
+void updatePosition(float &x, float &y, float angle, float speed) {
+x = rad * cos(angle);
+y = rad * sin(angle);
+}
+void drawText(const char* text, float x, float y) {
+glRasterPos2f(x, y);
+while (*text) {
+glutBitmapCharacter(GLUT_BITMAP_9_BY_15, *text);
+text++;
+}
+}
+void display() {
+glClear(GL_COLOR_BUFFER_BIT);
+glColor3f(1.0f, 1.0f, 1.0f);
+drawStarFractal(transx1, transy1, 0.2f, 0); // first fractal
+glColor3f(0.0f, 0.0f, 1.0f);
+drawStarFractal(translateX2, translateY2, 0.2f, 0); // Second fractal
+glColor3f(0.0f, 1.0f, 0.0f);
+drawStarFractal(translateX3, translateY3, 0.2f, 0); // Third fractal
+glColor3f(0.0f, 0.0f, 0.0f);
+drawText("SUHANI CHANDEL - 500108261", -0.9f, 0.9f);
+glutSwapBuffers();
+}
+void timer(int value) {
+if (currentDepth < MAX_DEPTH) {
+currentDepth++;
+}
+static float angle1 = 0.0f, angle2 = 2.0f, angle3 = 4.0f;
+static float speed1 = 0.02f, speed2 = 0.015f, speed3 = 0.025f;
+angle1 += speed1;
+angle2 += speed2;
+angle3 += speed3;
+if (angle1 > 2 * M_PI) angle1 -= 2 * M_PI;
+if (angle2 > 2 * M_PI) angle2 -= 2 * M_PI;
+if (angle3 > 2 * M_PI) angle3 -= 2 * M_PI;
+updatePosition(transx1, transy1, angle1, speed1);
+updatePosition(translateX2, translateY2, angle2, speed2);
+updatePosition(translateX3, translateY3, angle3, speed3);
+rotationAngle1 += 1.0f;
+rotationAngle2 -= 1.5f;
+rotationAngle3 += 0.5f;
+if (rotationAngle1 > 360.0f) rotationAngle1 -= 360.0f;
+if (rotationAngle2 > 360.0f) rotationAngle2 -= 360.0f;
+if (rotationAngle3 > 360.0f) rotationAngle3 -= 360.0f;
+scaleFactor1 += 0.01f;
+scaleFactor2 += 0.015f;
+scaleFactor3 += 0.005f;
+if (scaleFactor1 > 2.0f) scaleFactor1 = 1.0f;
+if (scaleFactor2 > 2.0f) scaleFactor2 = 1.0f;
+if (scaleFactor3 > 2.0f) scaleFactor3 = 1.0f;
+if (glutGet(GLUT_ELAPSED_TIME) % 2000 < 1000) {
+reflectX1 = true; reflectX2 = true; reflectX3 = true;
+} else {
+reflectX1 = false; reflectX2 = false; reflectX3 = false;
+}
+glutPostRedisplay();
+glutTimerFunc(1000 / 30, timer, 0);
+}
+void initialize() {
+glClearColor(0.7f, 0.7f, 0.7f, 1.0f);
+glMatrixMode(GL_PROJECTION);
+glLoadIdentity();
+glOrtho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
+glMatrixMode(GL_MODELVIEW);
+glLoadIdentity();
+}
+int main(int argc, char** argv) {
+glutInit(&argc, argv);
+glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
+glutInitWindowSize(800, 800);
+glutCreateWindow("fractal viva");
+initialize();
+glutDisplayFunc(display);
+glutTimerFunc(0, timer, 0);
+glutMainLoop();
+return 0;
+}
+OUTPUT:
