@@ -1,0 +1,119 @@
+#include <GL/glut.h>
+#include <cmath>
+#include <iostream>
+float vX[4] = {-0.5f, 0.5f, 0.7f, -0.7f};
+float vY[4] = {0.5f, 0.5f, -0.5f, -0.5f};
+void matrixMult(float& x, float& y, float mx[3][3]) {
+float newX = x * mx[0][0] + y * mx[0][1] + mx[0][2];
+float newY = x * mx[1][0] + y * mx[1][1] + mx[1][2];
+x = newX;
+y = newY;
+}
+void transformationFunction(int choice, float m1 = 0, float m2 = 0) {
+float mx[3][3] = {0};
+switch (choice) {
+case 1: // Translation
+mx[0][0] = 1; mx[0][2] = m1;
+mx[1][1] = 1; mx[1][2] = m2;
+mx[2][2] = 1;
+break;
+case 2: // Scaling
+mx[0][0] = m1;
+mx[1][1] = m2;
+mx[2][2] = 1;
+break;
+case 3: // Rotation
+mx[0][0] = cos(m1);
+mx[0][1] = -sin(m1);
+mx[1][0] = sin(m1);
+mx[1][1] = cos(m1);
+mx[2][2] = 1;
+break;
+case 4: // Reflection
+mx[0][0] = (m1 == 1 ? -1 : 1);
+mx[1][1] = (m2 == 1 ? -1 : 1);
+mx[2][2] = 1;
+break;
+case 5: // Shearing
+mx[0][0] = 1; mx[0][1] = m1;
+mx[1][0] = m2; mx[1][1] = 1;
+mx[2][2] = 1;
+break;
+}
+for (int i = 0; i < 4; i++) {
+matrixMult(vX[i], vY[i], mx);
+}
+glutPostRedisplay();
+}
+void displayText(float x, float y, const char* text) {
+glRasterPos2f(x, y);
+for (const char* c = text; *c != '\0'; c++) {
+glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
+}
+}
+void display() {
+glClear(GL_COLOR_BUFFER_BIT);
+glColor3f(1.0, 0.0, 0.0);
+glBegin(GL_POLYGON);
+for (int i = 0; i < 4; i++) {
+glVertex2f(vX[i], vY[i]);
+}
+glEnd();
+glColor3f(0.0, 1.0, 0.0);
+displayText(-1.9f, -1.9f, "SUHANI CHANDEL - 500108261");
+glFlush();
+}
+void init() {
+glClearColor(1.0, 0.0, 1.0, 1.0);
+glColor3f(0.0, 0.0, 0.0);
+glMatrixMode(GL_PROJECTION);
+glLoadIdentity();
+glOrtho(-2, 2, -2, 2, -1, 1);
+}
+void keyboard(unsigned char key, int x, int y) {
+float m1, m2;
+switch (key) {
+case 't': // Translation
+std::cout << "Enter X and Y translation distances : ";
+std::cin >> m1 >> m2;
+transformationFunction(1, m1, m2);
+break;
+case 's': // Scaling
+std::cout << "Enter X and Y scale factors : ";
+std::cin >> m1 >> m2;
+transformationFunction(2, m1, m2);
+break;
+case 'r': // Rotation
+std::cout << "Enter rotation angle in radians : ";
+std::cin >> m1;
+transformationFunction(3, m1);
+break;
+case 'f': // Reflection
+std::cout << "Enter reflection axes : ";
+std::cin >> m1 >> m2;
+transformationFunction(4, m1, m2);
+break;
+case 'h': // Shearing
+std::cout << "Enter X and Y shearing factors : ";
+std::cin >> m1 >> m2;
+transformationFunction(5, m1, m2);
+break;
+case 'q': // Exit
+std::cout << "Exiting program.\n";
+exit(0);
+default:
+std::cout << "Invalid key.\n";
+break;
+}
+}
+int main(int argc, char** argv) {
+glutInit(&argc, argv);
+glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
+glutInitWindowSize(500, 500);
+glutCreateWindow("2D Transformations Viva");
+init();
+glutDisplayFunc(display);
+glutKeyboardFunc(keyboard);
+glutMainLoop();
+return 0;
+}
